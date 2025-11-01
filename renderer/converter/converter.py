@@ -1,89 +1,87 @@
-import json
-from typing import Any, Dict, List, Tuple
+import requests
+from bs4 import BeautifulSoup
+import sys
+from pathlib import Path
+from playwright.sync_api import sync_playwright
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from renderer.render import FinderFile
 
+"""
+class FinderFile:
+    def __init__(
+        self,
+        title: str,
+        position: tuple[int, int],
+        is_link: bool = False,
+        href: str | None = None,
+        tag: str | None = None,
+    ):
+        self.title: str = title
+        self.position: tuple[int, int] = position
+        self.is_link: bool = is_link
+        self.href: str | None = href
+        self.tag: str | None = tag
+"""
 
-class Converter:
-    def __init__(self, filename: str, width: int, height: int) -> None:
-        self.__filename = filename
-        self.__width = int(width)
-        self.__height = int(height)
-        self.elements: Dict[str, Dict[str, Any]] = {}
+class CoordinateSystem:
+    def __init__(self, url: str, width: int, height: int) -> None:  
+        self.__url: str = url  
+        self.__width: int = width
+        self.__height: int = height
+        data: requests.models.Response = requests.get(url)
+        self.soup: BeautifulSoup = BeautifulSoup(data.text, 'html.parser')
 
-        try:
-            with open(self.__filename, "r", encoding="utf-8") as fh:
-                data = json.load(fh)
-        except Exception as e:
-            print("Error reading file:", e)
-            return
-
-        if isinstance(data, list):
-            root = {"tag": "root", "children": data}
-        elif isinstance(data, dict):
-            root = data
-        else:
-            print("Unexpected root JSON type:", type(data))
-            return
-
-        self._parse_node(root, 0, 0, self.__width, self.__height, path=root.get("tag", "root"))
-
-    def _node_children(self, node: Dict[str, Any]) -> List[Dict[str, Any]]:
-        children = node.get("children")
-        if isinstance(children, list):
-            return children
-        return []
-
-    def _make_key(self, path: str, node: Dict[str, Any], index: int) -> str:
-        attrs = node.get("attrs") or {}
-        node_id = attrs.get("id")
-        if node_id:
-            return f"{path}/{node.get('tag', 'node')}#{node_id}"
-        return f"{path}/{index}:{node.get('tag', 'node')}"
-
-    def _record(self, key: str, node: Dict[str, Any], bbox: Tuple[int, int, int, int]) -> None:
-        x, y, w, h = bbox
-        self.elements[key] = {
-            "tag": node.get("tag"),
-            "attrs": node.get("attrs"),
-            "text": node.get("text"),
-            "bbox": {"x": x, "y": y, "width": w, "height": h},
-        }
-
-    def _parse_node(self, node: Dict[str, Any], x: int, y: int, w: int, h: int, path: str) -> None:
-        key = path
-        self._record(key, node, (x, y, w, h))
-
-        children = self._node_children(node)
-        if not children:
-            return
-
-        n = len(children)
-        if n == 0:
-            return
-
-        child_h = max(0, h // n)
-        for i, child in enumerate(children):
-            child_y = y + i * child_h
-            if i == n - 1:
-                child_h_actual = y + h - child_y
+    def __get_element_bboxes_playwright(self, selectors: list[str]) -> list[dict[str, int]]:
+        results: list[dict[str, int]] = []
+        viewport: tuple[int, int] = (self.__width, self.__height)
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page(viewport={'width': viewport[0], 'height': viewport[1]})
+            page.goto(self.__url)
+            page.wait_for_load_state("networkidle")
+            for sel in selectors:
+                rect = page.evaluate(
+                    """(s) => {
+                        const el = document.querySelector(s);
+                        if (!el) return null;
+                        const r = el.getBoundingClientRect();
+                        return {x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.width), height: Math.round(r.height)};
+                    }""",
+                    sel,
+                )
+                results.append(rect)
+            browser.close()
+        return results
+    
+    def coord_all(self) -> dict[str, FinderFile]:
+        elems = [el for el in self.soup.find_all(True)]
+        selectors = [el.name for el in elems]
+        bbox_results = self.__get_element_bboxes_playwright(selectors)
+        
+        result: dict[str, FinderFile] = {}
+        skip_tags = {"html", "head", "meta", "script", "style"}
+        for el, sel, rect in zip(elems, selectors, bbox_results):
+            if not rect or el.name.lower() in skip_tags:
+                continue
+            
+            title = el.get_text()
+            is_link = el.name.lower() == "a"
+            if href := el.get("href"):
+                href = str(href)
             else:
-                child_h_actual = child_h
-            child_key = self._make_key(path, child, i)
-            self._parse_node(child, x, child_y, w, child_h_actual, child_key)
-
-    def get_text_elements(self) -> list[tuple[tuple[int,int], str]]:
-        result = []
-        for element in self.elements.values():
-            if element["text"] != None and element["tag"] not in ["style"]:
-                result.append(((element["bbox"]["x"], element["bbox"]["y"]), element["text"]))
+                href = None
+            
+            position = (rect["x"], rect["y"])
+            
+            result[sel] = FinderFile(title=title, position=position, is_link=is_link, href=href, tag=el.name.lower())
+            
         return result
         
 
-
 def main():
-    conv = Converter("renderer/converter/test_data.json", 1000, 1000)
-    print(conv.get_text_elements())
+    d = CoordinateSystem("https://www.educative.io/answers/how-to-use-gettext-in-beautiful-soup", 1000, 1000) # ds.get_width, ds.get_height
+    coords = d.coord_all()
     pass
-
 
 if __name__ == "__main__":
     main()
