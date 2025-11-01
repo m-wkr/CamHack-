@@ -9,6 +9,7 @@ from font import bold, underline
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+
 class FinderFile:
     def __init__(
         self,
