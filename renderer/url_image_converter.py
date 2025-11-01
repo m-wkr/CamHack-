@@ -1,8 +1,8 @@
-from render import FinderFile
+from renderer.render import FinderFile
 from playwright.sync_api import sync_playwright
 from PIL import Image
 from io import BytesIO
-from domreader.domreader import dom_read
+from renderer.domreader.domreader import dom_read
 
 
 class URLImageConverter:
@@ -41,7 +41,6 @@ class URLImageConverter:
             result[key] = coord
         return result
         
-        
             
     def get_image_display(self, icon_size:tuple[int,int]=(512,512)) -> list[FinderFile]:
         result = []
@@ -75,6 +74,8 @@ class URLImageConverter:
                 if count >= self.__icon_limit:
                     return result
         return result
+    
+    
     
 if __name__ == "__main__":
     
