@@ -42,8 +42,8 @@ def finder_render(site_name="Test Site", files: list[FinderFile] = []):
 
     files.sort(key=lambda finder_file: finder_file.position[1])
     
-    if len(files) > 190:
-        y_threshold = files[189].position[1]
+    if len(files) > 100:
+        y_threshold = files[99].position[1]
         files = [finder_file for finder_file in files if finder_file.position[1] <= y_threshold]
     
     coord_min, coord_max = 0, 5000
@@ -67,7 +67,7 @@ def finder_render(site_name="Test Site", files: list[FinderFile] = []):
 
         for file in files:
 
-            file.title = file.title.replace("/", "-").replace("\0", "").replace(".", "․").strip()
+            file.title = file.title.replace("/", "-").replace("\0", "").replace(".", "․").strip().replace("[Image]", "\u200B")
 
             if file.title == "":
                 continue
