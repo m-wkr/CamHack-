@@ -52,7 +52,7 @@ def main():
     # ])
 
     d = CoordinateSystem(args.url, 1000, 1000) # ds.get_width, ds.get_height
-    coords = list(d.coord_all().values())
+    coords = list(d.coord_all(10))
     finder_render("Test Site", coords)
 
 if __name__ == "__main__":

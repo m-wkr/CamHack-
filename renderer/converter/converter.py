@@ -71,9 +71,9 @@ class CoordinateSystem:
                 href = str(href)
             else:
                 href = None
-            position = (rect["x"] + int(rect["width"] / 2), rect["y"] + int(rect["height"] / 2))
             
-            for t in textwrap.wrap(title, 20):
+            for (i, t) in enumerate(textwrap.wrap(title, slice_size)):
+                position = (rect["x"] + 50 * i + int(rect["width"] / 2), rect["y"] + int(rect["height"] / 2))
                 result.append(FinderFile(title=t, position=position, is_link=is_link, href=href, tag=el.name.lower()))
             
         return result
