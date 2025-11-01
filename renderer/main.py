@@ -6,15 +6,12 @@ from render import finder_render
 
 from converter.converter import CoordinateSystem
 
+
 def main():
     parser = ArgumentParser(description="Turns Finder to a web browser.")
-    parser.add_argument(
-        "url",
-        type=str,
-        help="The URL to open."
-    )
+    parser.add_argument("url", type=str, help="The URL to open.")
     args = parser.parse_args()
-    
+
     # center_x, center_y = 500, 300
     # radius = 150
     # count = 100
@@ -69,10 +66,11 @@ def main():
 
     # d = CoordinateSystem(args.url, 1000, 1000) # ds.get_width, ds.get_height
     # coords = list(d.coord_all(10))
-    
+
     with sync_playwright() as playwright:
-        coords = dom_read(playwright, args.url)
-    finder_render("Test Site", coords)
+        coords, title = dom_read(playwright, args.url)
+    finder_render(title, coords)
+
 
 if __name__ == "__main__":
     main()

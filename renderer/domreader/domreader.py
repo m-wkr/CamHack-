@@ -6,13 +6,15 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-def dom_read(playwright, url: str) -> list[FinderFile]:
+def dom_read(playwright, url: str) -> tuple[list[FinderFile], str]:
     ret = []
     browser = playwright.chromium.launch(headless=True)
     page = browser.new_page(viewport={"width": 1200, "height": 600})
     page.goto(url)
 
     page.wait_for_load_state("networkidle")
+
+    page_title = page.title()
 
     js_script = """
     (element) => {
@@ -78,17 +80,17 @@ def dom_read(playwright, url: str) -> list[FinderFile]:
     browser.close()
 
     for item in all_text_data:
-        title = item["text"]
+        text_value = item["text"]
         position = (
             int((item["x"] + item["width"] / 2)),
             int((item["y"] + item["height"] / 2) * 2),
         )
         ret.append(
             FinderFile(
-                title=title,
+                title=text_value,
                 position=position,
                 href=item["href"],
                 is_link=item["href"] is not None,
             )
         )
-    return ret
+    return (ret, page_title)
