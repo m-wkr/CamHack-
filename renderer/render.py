@@ -2,12 +2,12 @@ import tempfile
 import subprocess
 import logging
 import os
-import math
 from ds_store import DSStore
+
+from font import bold, underline
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-
 
 class FinderFile:
     def __init__(
@@ -25,26 +25,30 @@ class FinderFile:
         self.tag: str | None = tag
 
 
-def finder_render(site_name="Test Site"):
+def finder_render(site_name="Test Site", files: list[FinderFile] = []):
     with tempfile.TemporaryDirectory() as tmpdirname:
         logger.info("Created temporary directory %s", tmpdirname)
         os.mkdir(os.path.join(tmpdirname, site_name))
 
-        # Create 100 sample files
-        for i in range(100):
-            file_path = os.path.join(tmpdirname, site_name, f"file_{i}.txt")
-            with open(file_path, "w") as f:
-                f.write("\n")
-        logger.info("Created 100 sample files in %s", tmpdirname)
+        for file in files:
+            if file.is_link and file.href:
+                logger.info("Creating symlink for %s to %s", file.title, file.href)
+                file.title = underline(file.title)
+                # TODO: Handle URLs
+                os.symlink(file.href, os.path.join(tmpdirname, site_name, file.title))
+            else:
+                if file.tag == "h1":
+                    file.title = bold(file.title)
+                file_path = os.path.join(tmpdirname, site_name, file.title)
+                with open(file_path, "w") as f:
+                    f.write("")
+
+        logger.info("Created %d files in %s", len(files), tmpdirname)
 
         with DSStore.open(os.path.join(tmpdirname, site_name, ".DS_Store"), "w+") as d:
-            for i in range(100):
-                filename = f"file_{i}.txt"
-                angle = (i / 100) * 2 * math.pi
-                radius = 200
-                x = int(300 + radius * math.cos(angle))
-                y = int(300 + radius * math.sin(angle))
-                d[filename]["Iloc"] = (x, y)
+            for i, file in enumerate(files):
+                filename = file.title
+                d[filename]["Iloc"] = file.position
             logger.info("Set icon positions in .DS_Store")
 
         with DSStore.open(os.path.join(tmpdirname, ".DS_Store"), "w+") as d:
@@ -63,7 +67,8 @@ def finder_render(site_name="Test Site"):
                 "scrollPositionX": 0,
                 "arrangeBy": "none",
                 "labelOnBottom": True,
-                "iconSize": 16.0,
+                "iconSize": 16,
+                "textSize": 16,
                 "showIconPreview": False,
             }
 
