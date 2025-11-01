@@ -12,5 +12,3 @@ def createBashFile(filePath):
     f.write(writeToBashFile())
 
   os.chmod(filePath,0o755)
-
-createBashFile("123.sh")
