@@ -38,22 +38,47 @@ class FinderFile:
 
 
 def finder_render(site_name="Test Site", files: list[FinderFile] = []):
+    word_use_count = {}
+
+    files.sort(key=lambda finder_file: finder_file.position[1])
+    if len(files) > 190:
+        y_threshold = files[189].position[1]
+        files = [finder_file for finder_file in files if finder_file.position[1] <= y_threshold]
+        coord_min, coord_max = 0, 5000
+        valid_files = []
+        for finder_file in files:
+            x, y = finder_file.position
+            if x < coord_min or y < coord_min or x > coord_max or y > coord_max:
+                logger.warning(
+                    "Skipping %s due to out-of-range position %s",
+                    finder_file.title,
+                    finder_file.position,
+                )
+                continue
+            valid_files.append(finder_file)
+        files = valid_files
+
     with tempfile.TemporaryDirectory() as tmpdirname:
         logger.info("Created temporary directory %s", tmpdirname)
         os.mkdir(os.path.join(tmpdirname, site_name))
 
         for file in files:
 
-            file.title = file.title.replace("/", "-").replace("\0", "").strip()
+            file.title = file.title.replace("/", "-").replace("\0", "").replace(".", "․").strip()
 
             if file.title == "":
                 continue
 
-            if len(file.title) > 32:
+            if len(file.title) > 20:
                 logger.warning(
-                    "Filename %s is too long, truncating to 32 characters", file.title
+                    "Filename %s is too long, truncating to 20 characters", file.title
                 )
-                file.title = file.title[:32]
+                file.title = file.title[:20]
+
+            word_use_count[file.title.lower()] = word_use_count.get(file.title.lower(), 0) + 1
+
+            if word_use_count[file.title.lower()] > 1:
+                file.title += "\u200B" * (word_use_count[file.title.lower()] - 1)
 
             if file.is_link and file.href:
                 logger.info("Creating symlink for %s to %s", file.title, file.href)
@@ -107,7 +132,7 @@ def finder_render(site_name="Test Site", files: list[FinderFile] = []):
                 "viewOptionsVersion": 1,
                 "scrollPositionX": 0,
                 "arrangeBy": "none",
-                "labelOnBottom": True,
+                "labelOnBottom": False,
                 "iconSize": 16,
                 "textSize": 16,
                 "showIconPreview": False,
