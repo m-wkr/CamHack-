@@ -2,12 +2,17 @@ import tempfile
 import subprocess
 import logging
 import os
+import threading
 from ds_store import DSStore
 
 from font import bold, underline
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
+
+def set_icon_process(file_path: str, icon_path: str):
+    subprocess.run(["fileicon", "set", file_path, icon_path])
 
 
 class FinderFile:
@@ -27,22 +32,25 @@ class FinderFile:
         self.tag: str | None = tag
         self.icon_path: str | None = icon_path
 
+
 def finder_render(site_name="Test Site", files: list[FinderFile] = []):
     with tempfile.TemporaryDirectory() as tmpdirname:
         logger.info("Created temporary directory %s", tmpdirname)
         os.mkdir(os.path.join(tmpdirname, site_name))
 
         for file in files:
-                
+
             file.title = file.title.replace("/", "-").replace("\0", "").strip()
 
             if file.title == "":
                 continue
-            
+
             if len(file.title) > 32:
-                logger.warning("Filename %s is too long, truncating to 32 characters", file.title)
+                logger.warning(
+                    "Filename %s is too long, truncating to 32 characters", file.title
+                )
                 file.title = file.title[:32]
-            
+
             if file.is_link and file.href:
                 logger.info("Creating symlink for %s to %s", file.title, file.href)
                 file.title = underline(file.title)
@@ -55,16 +63,28 @@ def finder_render(site_name="Test Site", files: list[FinderFile] = []):
                 file_path = os.path.join(tmpdirname, site_name, file.title)
                 with open(file_path, "w") as f:
                     f.write("")
+
+            threads = []
+
             if file.icon_path:
-                subprocess.run([
-                    "fileicon", "set", file_path, file.icon_path
-                ])
+                t = threading.Thread(
+                    target=set_icon_process, args=(file_path, file.icon_path)
+                )
+                threads.append(t)
+            
+            for t in threads:
+                t.start()
+
+            for t in threads:
+                t.join()
 
         with DSStore.open(os.path.join(tmpdirname, site_name, ".DS_Store"), "w+") as d:
             for i, file in enumerate(files):
                 if file.title == "":
                     continue
-                logger.info("Setting icon position for %s to %s", file.title, file.position)
+                logger.info(
+                    "Setting icon position for %s to %s", file.title, file.position
+                )
                 filename = file.title[:32]
                 d[filename]["Iloc"] = file.position
             logger.info("Set icon positions in .DS_Store")
