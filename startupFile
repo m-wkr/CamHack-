@@ -2,9 +2,6 @@
 
 FILE=$(basename "$0")
 
-argv=()
-for i in $FILE; do 
-    argv+=($i)
-done
+parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 
-python3 ./renderer/main.py "${argv[@]}"
+python3 "$parent_path"/renderer/main.py -u "$FILE"
