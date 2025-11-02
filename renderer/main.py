@@ -37,7 +37,7 @@ def main():
     if args.text:
 
         with sync_playwright() as playwright:
-            coords, _, title = dom_read(playwright, args.url)
+            coords, _, title = dom_read(playwright, args.url, no_break=True)
         finder_render(title, coords)
         return
       

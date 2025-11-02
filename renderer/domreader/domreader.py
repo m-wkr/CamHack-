@@ -99,7 +99,7 @@ def dom_read(playwright, url: str, no_break: bool = False) -> tuple[list[FinderF
                                 "href": resolved_href,
                             }
                         )
-            elif not no_break and element.evaluate("el => el.tagName.toLowerCase() === 'img'"):
+            elif element.evaluate("el => el.tagName.toLowerCase() === 'img'"):
                 # Handle images
                 src = element.get_attribute("src")
                 output_path = None
@@ -134,22 +134,36 @@ def dom_read(playwright, url: str, no_break: bool = False) -> tuple[list[FinderF
                     except Exception as image_error:
                         logger.debug("Failed to save image: %s", image_error)
                     if box:
-                        brokenIms=imageBreak(output_path,{'x':16,'y':16},{'x':box['x'],'y':box['y']})
-                        for brokenIm in brokenIms:
-                            brokenOutpath=str(image_dir / "brimage")+str(time.time())+".png"
-                            imageio.v2.imwrite(brokenOutpath,brokenIm['im'])
+                        if no_break:
                             all_text_data.append(
-                                {
-                                    "text": "[Image]",
-                                    "x": brokenIm['pos']['x'],
-                                    "y": brokenIm['pos']['y'],
-                                    "width": 16,
-                                    "height": 16,
-                                    "href": None,
-                                    "icon_path": str(brokenOutpath) if brokenOutpath else None,
-                                }
-                            )
+                            {
+                                "text": "[Image]",
+                                "x": box["x"],
+                                "y": box["y"],
+                                "width": box["width"],
+                                "height": box["height"],
+                                "href": None,
+                                "icon_path": str(output_path) if output_path else None,
+                            }
+                        )
                             logger.info(f"Found image in element: {src[:10]}...")
+                        else:
+                            brokenIms=imageBreak(output_path,{'x':16,'y':16},{'x':box['x'],'y':box['y']})
+                            for brokenIm in brokenIms:
+                                brokenOutpath=str(image_dir / "brimage")+str(time.time())+".png"
+                                imageio.v2.imwrite(brokenOutpath,brokenIm['im'])
+                                all_text_data.append(
+                                    {
+                                        "text": "[Image]",
+                                        "x": brokenIm['pos']['x'],
+                                        "y": brokenIm['pos']['y'],
+                                        "width": 16,
+                                        "height": 16,
+                                        "href": None,
+                                        "icon_path": str(brokenOutpath) if brokenOutpath else None,
+                                    }
+                                )
+                                logger.info(f"Found image in element: {src[:10]}...")
 
         except Exception as e:
             # Ignore errors from elements that disappeared
