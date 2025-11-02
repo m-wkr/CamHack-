@@ -3,8 +3,12 @@ from playwright.sync_api import sync_playwright
 
 from domreader.domreader import dom_read
 from render import finder_render
+from renderer.URLsanitiser import returnURL
 from url_image_converter import URLImageConverter
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def main():
     parser = ArgumentParser(description="Turns Finder to a web browser.")
@@ -33,16 +37,20 @@ def main():
     if args.text:
 
         with sync_playwright() as playwright:
-            coords, _, title = dom_read(playwright, args.url)
+            coords, _, title = dom_read(playwright, returnURL(args.url), no_break=True)
         finder_render(title, coords)
         return
       
-    img_version()
-    
-def img_version():
-    converter = URLImageConverter("https://camhack.org/")
-    tokens, title = converter.get_image_display() + converter.get_link_display() + converter.get_cover_display(), converter.title
-    finder_render(title, tokens)
+    converter = URLImageConverter(returnURL(args.url), icon_limit=300)
+    image_tokens = converter.get_image_display()
+    link_tokens = converter.get_link_display()
+    # cover_tokens = converter.get_cover_display()
+    cover_tokens = []
+
+    tokens, title = image_tokens + link_tokens + cover_tokens, converter.title
+    logger.info(f"Rendering {len(image_tokens)} image tokens and {len(link_tokens)} link tokens and {len(cover_tokens)} cover tokens.")
+
+    finder_render(title, tokens, icon_size=512)
 
 if __name__ == "__main__":
     main()

@@ -22,11 +22,14 @@ class URLImageConverter:
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.9",
         }
-        self.__state: State = State(url)
+        state_path = Path(__file__).parent / "state.json"
+        self.__state = State(str(state_path))
         self.__img: Image.Image = self.__get_img(url)
-        ### get_ref has the side effect of populating the shift command dict
+        ### get_ref and get_natigation_buttons has the side effect of populating the ref_bboxes dict
         self.__ref_bboxes: dict[FinderFile, tuple[int,int,int,int]] = {}
+        self.__get_navigation_buttons()
         self.__ref: list[FinderFile] = self.__get_ref(url)
+        self.__links: int = len(self.__ref) + 30
     
     def set_state(self, url):
         self.__state = State(url)
@@ -37,8 +40,8 @@ class URLImageConverter:
         with sync_playwright() as p:
             browser = p.firefox.launch()
             page = browser.new_page()
-            page.goto(url)
             browser.new_context().set_extra_http_headers(self.__header)
+            page.goto(url)
             page.wait_for_load_state("networkidle")
             img_bytes: bytes = page.screenshot(full_page=True)
             browser.close()
@@ -47,17 +50,14 @@ class URLImageConverter:
     
     def __get_state_history_ref(self):
         token = []
-        ix, iy = self.__icon_size
-        vx, vy = self.__img.size
         
         if self.__state.history != []:
-            x, y = (vx // 2, vy // 2)
-            token.append(FinderFile(title="[Placeholder]", position=(x,y), is_link=True, href=self.__state.history[-1]))
+            token.append(FinderFile(title="[Image]", position=(0,0), is_link=True, href=self.__state.history[-1]))
         return token
     
     def __get_ref(self, url):
         with sync_playwright() as playwright:
-            coords, self.__ref_bboxes, self.title = dom_read(playwright, url)
+            coords, self.__ref_bboxes, self.title = dom_read(playwright, url, no_break=True)
         tokens = list(filter(lambda x: x.is_link, coords))
         tokens.extend(self.__get_state_history_ref())
         self.__ref_bboxes = {k: v for k, v in self.__ref_bboxes.items() if k in tokens}
@@ -90,26 +90,31 @@ class URLImageConverter:
             positions.append((x,y+h))
         return positions
     
-    def __get_navigation_buttons(self, position:list[tuple[int, int]] = [
-        (0,0),
-        (100,100),
-        (200,200),
-        (300,300),
-        ]):
-        #current
-        return [
-            FinderFile(title="[Search]", position=position[0], icon_path="url_icon/search.png"),
-            FinderFile(title="[Back]", position=position[1], icon_path="url_icon/back.png"),
-            FinderFile(title="[Forward]", position=position[2], icon_path="url_icon/forward.png"),
-            FinderFile(title="[History]", position=position[3], icon_path="url_icon/history.png")
+    
+    def __get_navigation_buttons(self):
+        #ICON BACK 64, 64 Top Left
+        #ICON BACK 64, 64 Top Right
+        back_pos, search_pos = (0,0), (self.__img.size[0], 0)
+        if self.__state.history != []:
+            is_link = True
+            href = self.__state.history[-1]
+        else:
+            is_link = False
+            href = None
+        ff = [
+            FinderFile(title="[Image]", position=back_pos, is_link=is_link, href=href, icon_path="url_icon/search.png"),
+            FinderFile(title="[Image]", position=search_pos, icon_path="url_icon/back.png"),
         ]
         
-    def __set_image_display(self, positions:list[tuple[int, int]]):
+        for f in ff:
+            self.__ref_bboxes[f] = (f.position[0], f.position[1], 64, 64)
+        
+    def __set_image_display(self, positions:list[tuple[int, int]], limit:int=0):
         bbpos_to_ref = {(int(bbox[0]), int(bbox[1])): ref for ref, bbox in self.__ref_bboxes.items()}
         result = []
         ix, iy = self.__icon_size
         for x, y in positions:
-            icon_path = f"renderer/url_icon/{self.__icon_limit}.png"
+            icon_path = Path(__file__).parent / "url_icon" / f"{self.__icon_limit}.png"
             self.__img.crop((x, y, x+ix, y+iy)).save(icon_path)
             
             if ref := bbpos_to_ref.get((x,y)):
@@ -124,22 +129,36 @@ class URLImageConverter:
                 position=(x,y),
                 is_link=is_link,
                 href=href,
-                icon_path=icon_path
+                icon_path=str(icon_path)
             ))
             
             self.__icon_limit -= 1
-            if 0 >= self.__icon_limit:
+            if limit >= self.__icon_limit:
                 return result
         return result
             
     def get_image_display(self) -> list[FinderFile]:
         positions = self.__linkless_tiling()
-        return self.__set_image_display(positions)
-
+        return self.__set_image_display(positions, limit=self.__links*3)
+    
+    """def get_link_display_with_cover(self) -> list[FinderFile]:
+        positions = self.__link_with_cover_tiling()
+        return self.__set_image_display(positions)"""
+    
     def get_link_display(self) -> list[FinderFile]:
         positions = self.__link_tiling()
-        #positions.extend(self.__get_navigation_buttons())
-        return self.__set_image_display(positions)
+        ff = self.__set_image_display(positions)
+        seen_x = []
+        seen_y = []
+        result = []
+        for f in ff:
+            x, y = f.position
+            if x in seen_x or y in seen_y:
+                continue
+            seen_x.append(x)
+            seen_y.append(y)
+            result.append(f)
+        return result
     
     def get_cover_display(self) -> list[FinderFile]:
         positions = self.__link_cover_tiling()
@@ -153,5 +172,5 @@ if __name__ == "__main__":
     # You can input an different icon_size (int, int) default is 512, 512
     
     converter = URLImageConverter("https://camhack.org/")
-    tokens, title = converter.get_image_display(), converter.title
+    tokens, _, title = converter.get_image_display(), converter.get_link_display(), converter.title
     pass
