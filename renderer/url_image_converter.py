@@ -22,7 +22,7 @@ class URLImageConverter:
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.9",
         }
-        self.__state: State = State(url)
+        self.__state: State = State()
         self.__img: Image.Image = self.__get_img(url)
         ### get_ref and get_natigation_buttons has the side effect of populating the ref_bboxes dict
         self.__ref_bboxes: dict[FinderFile, tuple[int,int,int,int]] = {}
@@ -50,7 +50,7 @@ class URLImageConverter:
         token = []
         
         if self.__state.history != []:
-            token.append(FinderFile(title="[Placeholder]", position=(0,0), is_link=True, href=self.__state.history[-1]))
+            token.append(FinderFile(title="[Image]", position=(0,0), is_link=True, href=self.__state.history[-1]))
         return token
     
     def __get_ref(self, url):
@@ -99,8 +99,8 @@ class URLImageConverter:
             is_link = False
             href = None
         ff = [
-            FinderFile(title="[Search]", position=back_pos, is_link=is_link, href=href, icon_path="url_icon/search.png"),
-            FinderFile(title="[Back]", position=search_pos, icon_path="url_icon/back.png"),
+            FinderFile(title="[Image]", position=back_pos, is_link=is_link, href=href, icon_path="url_icon/search.png"),
+            FinderFile(title="[Image]", position=search_pos, icon_path="url_icon/back.png"),
         ]
         
         for f in ff:
