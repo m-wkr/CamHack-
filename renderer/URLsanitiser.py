@@ -6,7 +6,7 @@ def returnURL(search):
      
        Aims to either give the exact page you were looking for or redirects to Duckduckgo
     """
-    quickchecks={search,"https://"+search,"http://"+search,"https://www."+search,search}
+    quickchecks={search,"https://"+search,"http://"+search,search}
     for quickcheck in quickchecks:
         valid=validators.url(quickcheck)
         print(valid,quickcheck)
