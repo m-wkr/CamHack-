@@ -100,6 +100,7 @@ def dom_read(playwright, url: str) -> tuple[list[FinderFile], dict[FinderFile, t
             elif element.evaluate("el => el.tagName.toLowerCase() === 'img'"):
                 # Handle images
                 src = element.get_attribute("src")
+                output_path = None
                 if src:
                     box = element.bounding_box()
                     image_dir = Path.cwd() / "images"
@@ -139,7 +140,7 @@ def dom_read(playwright, url: str) -> tuple[list[FinderFile], dict[FinderFile, t
                                 "width": box["width"],
                                 "height": box["height"],
                                 "href": None,
-                                "icon_path": str(output_path) if output_path else None,
+                                "icon_path": output_path if output_path else None,
                             }
                         )
                         logger.info(f"Found image in element: {src[:10]}...")
