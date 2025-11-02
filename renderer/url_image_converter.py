@@ -50,10 +50,6 @@ class URLImageConverter:
         ix, iy = self.__icon_size
         vx, vy = self.__img.size
         
-        if self.__state.left != []:
-            token.append(FinderFile(title="[Placeholder]", position=(0,0), is_link=True, href=self.__state.left[-1]))
-        if self.__state.right != []:
-            token.append(FinderFile(title="[Placeholder]", position=(vx-ix,vy-iy), is_link=True, href=self.__state.right[-1]))
         if self.__state.history != []:
             x, y = (vx // 2, vy // 2)
             token.append(FinderFile(title="[Placeholder]", position=(x,y), is_link=True, href=self.__state.history[-1]))
