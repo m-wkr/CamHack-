@@ -67,6 +67,26 @@ def dom_read(playwright, url: str) -> tuple[list[FinderFile], str]:
                     for idx, word in enumerate(words):
                         row = idx // cols
                         col = idx % cols
+                        resolved_href = None
+                        if href:
+                            try:
+                                resolved_href = element.evaluate(
+                                    """(node) => {
+                                        if (node.href) return node.href;
+                                        const attr = node.getAttribute('href');
+                                        if (!attr) return null;
+                                        try {
+                                            return new URL(attr, window.location.href).toString();
+                                        } catch (err) {
+                                            return attr;
+                                        }
+                                    }"""
+                                )
+                            except Exception:
+                                resolved_href = href
+                            if not resolved_href:
+                                resolved_href = href
+
                         all_text_data.append(
                             {
                                 "text": word,
@@ -74,7 +94,7 @@ def dom_read(playwright, url: str) -> tuple[list[FinderFile], str]:
                                 "y": box["y"] + row * cell_height,
                                 "width": cell_width,
                                 "height": cell_height,
-                                "href": urlparse(href) if href else None,
+                                "href": resolved_href,
                             }
                         )
             elif element.evaluate("el => el.tagName.toLowerCase() === 'img'"):
