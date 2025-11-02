@@ -1,4 +1,4 @@
-![Banner](docs/Banner.svg)
+<img src="docs/Banner.svg" width="100%">
 
 **Browse the web with Finder. Plot graphs, follow links, and explore.**
 
