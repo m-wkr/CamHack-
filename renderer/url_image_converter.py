@@ -24,8 +24,9 @@ class URLImageConverter:
         }
         self.__state: State = State(url)
         self.__img: Image.Image = self.__get_img(url)
-        ### get_ref has the side effect of populating the shift command dict
+        ### get_ref and get_natigation_buttons has the side effect of populating the ref_bboxes dict
         self.__ref_bboxes: dict[FinderFile, tuple[int,int,int,int]] = {}
+        self.__get_navigation_buttons()
         self.__ref: list[FinderFile] = self.__get_ref(url)
     
     def set_state(self, url):
@@ -47,12 +48,9 @@ class URLImageConverter:
     
     def __get_state_history_ref(self):
         token = []
-        ix, iy = self.__icon_size
-        vx, vy = self.__img.size
         
         if self.__state.history != []:
-            x, y = (vx // 2, vy // 2)
-            token.append(FinderFile(title="[Placeholder]", position=(x,y), is_link=True, href=self.__state.history[-1]))
+            token.append(FinderFile(title="[Placeholder]", position=(0,0), is_link=True, href=self.__state.history[-1]))
         return token
     
     def __get_ref(self, url):
@@ -90,19 +88,23 @@ class URLImageConverter:
             positions.append((x,y+h))
         return positions
     
-    def __get_navigation_buttons(self, position:list[tuple[int, int]] = [
-        (0,0),
-        (100,100),
-        (200,200),
-        (300,300),
-        ]):
-        #current
-        return [
-            FinderFile(title="[Search]", position=position[0], icon_path="url_icon/search.png"),
-            FinderFile(title="[Back]", position=position[1], icon_path="url_icon/back.png"),
-            FinderFile(title="[Forward]", position=position[2], icon_path="url_icon/forward.png"),
-            FinderFile(title="[History]", position=position[3], icon_path="url_icon/history.png")
+    def __get_navigation_buttons(self):
+        #ICON BACK 64, 64 Top Left
+        #ICON BACK 64, 64 Top Right
+        back_pos, search_pos = (0,0), (self.__img.size[0], 0)
+        if self.__state.history != []:
+            is_link = True
+            href = self.__state.history[-1]
+        else:
+            is_link = False
+            href = None
+        ff = [
+            FinderFile(title="[Search]", position=back_pos, is_link=is_link, href=href, icon_path="url_icon/search.png"),
+            FinderFile(title="[Back]", position=search_pos, icon_path="url_icon/back.png"),
         ]
+        
+        for f in ff:
+            self.__ref_bboxes[f] = (f.position[0], f.position[1], 64, 64)
         
     def __set_image_display(self, positions:list[tuple[int, int]]):
         bbpos_to_ref = {(int(bbox[0]), int(bbox[1])): ref for ref, bbox in self.__ref_bboxes.items()}
