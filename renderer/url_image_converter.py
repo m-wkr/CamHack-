@@ -29,7 +29,7 @@ class URLImageConverter:
         self.__ref_bboxes: dict[FinderFile, tuple[int,int,int,int]] = {}
         self.__get_navigation_buttons()
         self.__ref: list[FinderFile] = self.__get_ref(url)
-        self.__links: int = len(self.__ref) + 100
+        self.__links: int = len(self.__ref) + 30
     
     def set_state(self, url):
         self.__state = State(url)
