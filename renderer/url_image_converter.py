@@ -29,7 +29,7 @@ class URLImageConverter:
         self.__ref_bboxes: dict[FinderFile, tuple[int,int,int,int]] = {}
         self.__get_navigation_buttons()
         self.__ref: list[FinderFile] = self.__get_ref(url)
-        self.__links: int = len(self.__ref)
+        self.__links: int = len(self.__ref) + 10
     
     def set_state(self, url):
         self.__state = State(url)
@@ -72,20 +72,20 @@ class URLImageConverter:
     def __link_tiling(self) -> list[tuple[int, int]]:
         positions = []
         for (x,y,w,h) in self.__ref_bboxes.values():
-            x = int(x / 10) * 10
-            y = int(y / 4) * 4
-            w = int(w / 4) * 4
-            h = int(h / 4) * 4
+            x = int(x / 8) * 8
+            y = int(y / 8) * 8
+            w = int(w / 8) * 8
+            h = int(h / 8) * 8
             positions.append((x,y))
         return positions
     
     def __link_cover_tiling(self) -> list[tuple[int, int]]:
         positions = []
         for (x,y,w,h) in self.__ref_bboxes.values():
-            x = int(x / 4) * 4
-            y = int(y / 4) * 4
-            w = int(w / 4) * 4
-            h = int(h / 4) * 4
+            x = int(x / 8) * 8
+            y = int(y / 8) * 8
+            w = int(w / 8) * 8
+            h = int(h / 8) * 8
             positions.append((x+w,y))
             positions.append((x,y+h))
         return positions
