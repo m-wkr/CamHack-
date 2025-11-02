@@ -37,7 +37,7 @@ def main():
         finder_render(title, coords, icon_size=16, text_mode=True)
         return
 
-    converter = URLImageConverter(args.url, icon_limit=210)
+    converter = URLImageConverter(args.url, icon_limit=150)
     tokens, title = converter.get_image_display(), converter.title
     finder_render(title, tokens, icon_size=512)
 

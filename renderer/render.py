@@ -47,8 +47,8 @@ def finder_render(
 
     files.sort(key=lambda finder_file: finder_file.position[1])
 
-    if len(files) > 200:
-        y_threshold = files[199].position[1]
+    if len(files) > 150:
+        y_threshold = files[149].position[1]
         files = [
             finder_file
             for finder_file in files
