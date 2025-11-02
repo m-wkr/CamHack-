@@ -1,4 +1,6 @@
-import subprocess
+import json
+
+"""import subprocess
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileMovedEvent
 
@@ -24,30 +26,20 @@ if __name__ == "__main__":
         obs.join()
     except KeyboardInterrupt:
         obs.stop()
-        obs.join()
+        obs.join()"""
 
 class State:
-    def __init__(self, url:str="https://camhack.org") -> None:
-        self.left: list[str] = []
-        self.right: list[str] = []
-        self.history: list[str] = []
+    def __init__(self, filename:str="state.json", url:str="https://camhack.org") -> None:
+        with open(filename, "r") as state_file:
+            state = json.loads(state_file.read())
+        self.history: list[str] = state["history"] if "history" in state else []
         self.current: str = url
-    
-    def back(self):
-        self.history.append(self.current)
-        self.right.append(self.current)
-        self.current = self.left.pop()
-    
-    def forward(self):
-        self.history.append(self.current)
-        self.left.append(self.current)
-        self.current = self.right.pop()
-    
-    def update(self, url:str):
-        self.history.append(self.current)
-        self.left.append(self.current)
-        self.current = url
         
+        with open(filename, "w") as state_file:
+            state = {
+                "history" : self.history + [self.current],
+            }
+            state_file.write(json.dumps(state))
         """
         NEED TO INTEGRATE CORRECTLY
         - Should have a left and history of recently visited websites and be able to hyperlink the left and right with the latest

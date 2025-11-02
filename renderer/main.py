@@ -34,13 +34,15 @@ def main():
 
         with sync_playwright() as playwright:
             coords, _, title = dom_read(playwright, args.url)
-        finder_render(title, coords, icon_size=16, text_mode=True)
+        finder_render(title, coords)
         return
-
-    converter = URLImageConverter(args.url, icon_limit=150)
-    tokens, title = converter.get_image_display(), converter.title
-    finder_render(title, tokens, icon_size=512)
-
+      
+    img_version()
+    
+def img_version():
+    converter = URLImageConverter("https://camhack.org/")
+    tokens, title = converter.get_image_display() + converter.get_link_display() + converter.get_cover_display(), converter.title
+    finder_render(title, tokens)
 
 if __name__ == "__main__":
     main()
