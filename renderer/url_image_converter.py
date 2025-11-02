@@ -76,8 +76,6 @@ class URLImageConverter:
             y = int(y)
             w = int(w)
             h = int(h)
-            if h+y+self.__icon_size[1] > self.__img.size[1]:
-                continue
             positions.append((x,y))
         return positions
     
@@ -150,7 +148,7 @@ class URLImageConverter:
     def get_link_display(self) -> list[FinderFile]:
         positions = self.__link_tiling()
         ff = self.__set_image_display(positions)
-        return list(filter(lambda x: x.position[0] > 1280 or x.position[1] > 560, ff))
+        return list(filter((lambda a: a.position[1]+self.__icon_size[1] > self.__img.size[1]), ff))
     
     def get_cover_display(self) -> list[FinderFile]:
         positions = self.__link_cover_tiling()
