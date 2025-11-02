@@ -3,6 +3,8 @@ from playwright.sync_api import sync_playwright
 
 from domreader.domreader import dom_read
 from render import finder_render
+from url_image_converter import URLImageConverter
+
 
 def main():
     parser = ArgumentParser(description="Turns Finder to a web browser.")

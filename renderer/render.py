@@ -7,8 +7,11 @@ import sys
 from ds_store import DSStore
 
 from font import bold, underline
+from pathlib import Path
 
-sys.path.insert(0,"..")
+project_root = Path(__file__).resolve().parents[1]
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 from scriptWriter import writeBashContents
 
 logger = logging.getLogger(__name__)
@@ -42,8 +45,8 @@ def finder_render(site_name="Test Site", files: list[FinderFile] = []):
 
     files.sort(key=lambda finder_file: finder_file.position[1])
     
-    if len(files) > 190:
-        y_threshold = files[189].position[1]
+    if len(files) > 200:
+        y_threshold = files[199].position[1]
         files = [finder_file for finder_file in files if finder_file.position[1] <= y_threshold]
     
     coord_min, coord_max = 0, 10000
@@ -87,7 +90,7 @@ def finder_render(site_name="Test Site", files: list[FinderFile] = []):
                 logger.info("Creating symlink for %s to %s", file.title, file.href)
                 file.title = underline(file.title)
                 file_path = os.path.join(tmpdirname, site_name, file.title)
-                writeBashContents.createBashFile(file_path)
+                writeBashContents.createBashFile(file_path,file.href)
             else:
                 if file.tag == "h1":
                     file.title = bold(file.title)
@@ -136,7 +139,7 @@ def finder_render(site_name="Test Site", files: list[FinderFile] = []):
                 "scrollPositionX": 0,
                 "arrangeBy": "none",
                 "labelOnBottom": False,
-                "iconSize": 16,
+                "iconSize": 512,
                 "textSize": 16,
                 "showIconPreview": False,
             }
