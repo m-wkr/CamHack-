@@ -92,7 +92,7 @@ class URLImageConverter:
         result = []
         ix, iy = self.__icon_size
         for x, y in positions:
-            icon_path = f"renderer/url_icon/{self.__icon_limit}.png"
+            icon_path = f"url_icon/{self.__icon_limit}.png"
             self.__img.crop((x, y, x+ix, y+iy)).save(icon_path)
             
             if ref := bbpos_to_ref.get((x,y)):
