@@ -72,20 +72,22 @@ class URLImageConverter:
     def __link_tiling(self) -> list[tuple[int, int]]:
         positions = []
         for (x,y,w,h) in self.__ref_bboxes.values():
-            x = int(x / 8) * 8
-            y = int(y / 8) * 8
-            w = int(w / 8) * 8
-            h = int(h / 8) * 8
+            x = int(x)
+            y = int(y)
+            w = int(w)
+            h = int(h)
+            if h+y+200 > self.__img.size[1]:
+                continue
             positions.append((x,y))
         return positions
     
     def __link_cover_tiling(self) -> list[tuple[int, int]]:
         positions = []
         for (x,y,w,h) in self.__ref_bboxes.values():
-            x = int(x / 8) * 8
-            y = int(y / 8) * 8
-            w = int(w / 8) * 8
-            h = int(h / 8) * 8
+            x = int(x)
+            y = int(y)
+            w = int(w)
+            h = int(h)
             positions.append((x+w,y))
             positions.append((x,y+h))
         return positions
