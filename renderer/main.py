@@ -3,12 +3,8 @@ from playwright.sync_api import sync_playwright
 
 from domreader.domreader import dom_read
 from render import finder_render
-<<<<<<< HEAD
-from renderer.url_image_converter import URLImageConverter
-=======
 from url_image_converter import URLImageConverter
 
->>>>>>> 88378d339409a7b74377eadf1616b1034dd5571e
 
 def main():
     parser = ArgumentParser(description="Turns Finder to a web browser.")
@@ -69,16 +65,6 @@ def main():
 
     # d = CoordinateSystem(args.url, 1000, 1000) # ds.get_width, ds.get_height
     # coords = list(d.coord_all(10))
-
-<<<<<<< HEAD
-    converter = URLImageConverter("https://camhack.org/")
-    tokens, title = converter.get_image_display(), converter.title
-    finder_render(title, tokens)
-=======
-    # with sync_playwright() as playwright:
-    #     coords, title = dom_read(playwright, args.url)
-    # finder_render(title, coords)
->>>>>>> 88378d339409a7b74377eadf1616b1034dd5571e
 
     converter = URLImageConverter(args.url, icon_limit=210)
     tokens, title = converter.get_image_display(), converter.title
